@@ -1,5 +1,5 @@
 ## Introduction
-A modified GPT-Sovits for inference with new features
+A modified GPT-Sovits for inference with new features. Support GPT-Sovits Latest.
 ## Example Model Tree
 ![Example](docs/example.png)
 <div align="center">
