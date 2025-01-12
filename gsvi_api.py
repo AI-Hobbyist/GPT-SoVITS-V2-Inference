@@ -4,6 +4,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import argparse
 
+pre_infer("GPT_SoVITS/configs/tts_infer.yaml")
+
 APP = FastAPI()
 
 # 定义请求参数模型
@@ -164,14 +166,11 @@ if __name__ == '__main__':
     parser.add_argument("-s","--host", type=str, default="127.0.0.1", help="主机地址")
     parser.add_argument("-p","--port", type=int, default=8000, help="端口")
     parser.add_argument("-k","--key", type=str, default="", help="推理密钥")
-    parser.add_argument("-c","--config", type=str, default="GPT_SoVITS/configs/tts_infer.yaml", help="默认配置文件")
     args = parser.parse_args()
     
     infer_key = args.key
     host = args.host
     port = args.port
-    
-    pre_infer(args.config)
     
     import uvicorn
     uvicorn.run(app=APP, host=host, port=port)
