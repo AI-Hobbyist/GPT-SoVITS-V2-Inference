@@ -112,13 +112,14 @@ async def infer_ref(model: inferWithCustomRefAaudio):
                 audio_url = f"http://{host}:{port}/{audio_path}"
             else:
                 audio_url = f"{model.audio_dl_url}/{audio_path}"
-    except:
+    except Exception as e:
         msg = "参数错误"
         audio_url = ""
+        print(e)
     return {"msg": msg, "audio_url": audio_url}
 
 # 根据情感进行推理
-@APP.post("/infer_emotion")
+@APP.post("/infer_single")
 async def infer_emotion(model: inferWithEmotions):
     try:
         if model.app_key != infer_key and infer_key != "":

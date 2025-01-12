@@ -29,7 +29,7 @@ def pre_infer(config_path):
     if config_path in [None, ""]:
         config_path = "GPT-SoVITS/configs/tts_infer.yaml"
     Path("outputs").mkdir(parents=True, exist_ok=True)
-    Path("custom_ref").mkdir(parents=True, exist_ok=True)
+    Path("custom_refs").mkdir(parents=True, exist_ok=True)
     tts_config = TTS_Config(config_path)
     print(tts_config)
     tts_pipeline = TTS(tts_config)
@@ -126,12 +126,12 @@ def audio_md5(audio):
     return audio_md5
 
 #===============通用函数================
-# base64编码音频转换为音频数据，并写出到文件，文件名为md5值
+# 将base64编码音频转换为音频数据，并写出到文件，文件名为md5值
 def base64_to_audio(base64_str):
-    audio = b64decode(base64_str)
-    audio_md5 = audio_md5(audio)
+    audio_data = b64decode(base64_str)
+    audio_md5 = md5(audio_data).hexdigest()
     audio_path = f"custom_refs/{audio_md5}.wav"
-    Path(audio_path).write_bytes(audio)
+    Path(audio_path).write_bytes(audio_data)
     return audio_path
 
 # 随机种子码
@@ -263,6 +263,7 @@ def custom_ref(modelname, refaudio_b64, text, text_lang, prompt_text, prompt_lan
     ref_audio_path = base64_to_audio(refaudio_b64)
     if check_audio_length(ref_audio_path) == False:
         msg = "参考音频长度不符合要求"
+        audio_path = ""
     else:
         load_model(modelname)
         if seed == -1:
@@ -272,7 +273,7 @@ def custom_ref(modelname, refaudio_b64, text, text_lang, prompt_text, prompt_lan
         audio_path = f"outputs/{audio_md5}.wav"
         Path(audio_path).write_bytes(audio)
         msg = "合成成功"
-        return audio_path, msg
+    return audio_path, msg
     
 # 根据说话人和情感合成语音（单人合成）
 def single_infer(modelname, speaker, prompt_lang, emotion, text, text_lang, top_k, top_p, temperature, text_split_method, batch_size, batch_threshold, split_bucket, speed_facter, fragment_interval, media_type, parallel_infer, repetition_penalty, seed):
