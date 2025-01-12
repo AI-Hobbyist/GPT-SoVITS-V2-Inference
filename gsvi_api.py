@@ -112,10 +112,9 @@ async def infer_ref(model: inferWithCustomRefAaudio):
                 audio_url = f"http://{host}:{port}/{audio_path}"
             else:
                 audio_url = f"{model.audio_dl_url}/{audio_path}"
-    except Exception as e:
+    except:
         msg = "参数错误"
         audio_url = ""
-        print(e)
     return {"msg": msg, "audio_url": audio_url}
 
 # 根据情感进行推理

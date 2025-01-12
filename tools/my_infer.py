@@ -121,10 +121,6 @@ def tts_infer(text, text_lang, ref_audio_path, prompt_text, prompt_lang, top_k, 
     
     return audio
 
-def audio_md5(audio):
-    audio_md5 = md5(audio).hexdigest()
-    return audio_md5
-
 #===============通用函数================
 # 将base64编码音频转换为音频数据，并写出到文件，文件名为md5值
 def base64_to_audio(base64_str):
