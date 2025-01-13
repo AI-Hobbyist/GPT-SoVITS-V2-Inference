@@ -4,8 +4,6 @@ from json import loads, dumps
 from requests import post, get
 from base64 import b64encode
 from pathlib import Path
-from startup.functions import start
-from startup.libs.agreement import webui_agreement
 
 import argparse
 import subprocess
@@ -24,7 +22,6 @@ app_key = args.api_key
 api_root = f"http://{args.server_name}:{args.port + 1}"
 PUBLIC_HOSTNAME_WHITELIST.append("127.0.0.1")
 
-start()
 #===================组件样式===================#
 css = """
 .add-conv {
@@ -151,7 +148,6 @@ def infer_custom(model, ref_audio, text, text_lang, prompt_text, prompt_text_lan
 
 with gr.Blocks(title="GPT-Sovits Inference WebUI", css=css) as app:
     gr.Markdown("## <center>[GPT-Sovits](https://github.com/RVC-Boss/GPT-SoVITS) 语音合成</center>")
-    gr.Markdown(f"{webui_agreement()}")
     with gr.Tabs(selected="single"):
         with gr.Tab("单人推理", id="single"):
             with gr.Row():
