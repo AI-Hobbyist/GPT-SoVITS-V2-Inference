@@ -4,30 +4,67 @@ from json import loads, dumps
 from requests import post, get
 from base64 import b64encode
 from pathlib import Path
+from startup.functions import start
+from startup.libs.agreement import webui_agreement
+
 import argparse
+import subprocess
+import atexit
+import time
 
 #===================启动参数===================#
 parser = argparse.ArgumentParser()
-parser.add_argument("-a","--api_root",type=str,default="http://127.0.0.1:8000",help="API地址")
 parser.add_argument("-s","--server_name",type=str,default="127.0.0.1",help="WebUI地址")
 parser.add_argument("-p","--port",type=int,default=8080,help="WebUI端口")
 parser.add_argument("-ak","--api_key",type=str,default="",help="API密钥")
 parser.add_argument("-sr","--share",action="store_true",help="共享WebUI")
+parser.add_argument("-d","--device",type=str,default="cuda",help="推理设备(cuda/cpu)")
 args = parser.parse_args()
-api_root = args.api_root
 app_key = args.api_key
+api_root = f"http://{args.server_name}:{args.port + 1}"
 PUBLIC_HOSTNAME_WHITELIST.append("127.0.0.1")
+
+start()
 #===================组件样式===================#
 css = """
 .add-conv {
     height: 80px;
 }
 """
+
+#===================启动后端===================#
+#启动后端
+def start_server():
+    subprocess.Popen(["runtime/python.exe", "gsvi_api.py", "-p", str(args.port + 1), "-s", "0.0.0.0", "-d", args.device])
+
+#关闭webui后关闭后端
+def close_server():
+    backend_process = subprocess.Popen(["runtime/python.exe", "gsvi_api.py", "-p", str(args.port + 1), "-s", "0.0.0.0", "-d", args.device])
+    backend_process_pid = backend_process.pid
+    subprocess.Popen(["taskkill", "/f", "/pid", str(backend_process_pid)])
+
+# 等待API启动成功
+def wait_for_api():
+    while True:
+        try:
+            response = get(f"{api_root}/models")
+            if response.status_code == 200:
+                break
+        except:
+            pass
+        time.sleep(1)
+
 #===================公共函数===================#
+# 启动服务
+start_server()
+wait_for_api()
+atexit.register(close_server)
+
 # 获取模型列表
 def get_models():
     data = get(f"{api_root}/models").json()
     return data
+
 model_list = get_models()
 
 #获取说话人列表
@@ -114,6 +151,7 @@ def infer_custom(model, ref_audio, text, text_lang, prompt_text, prompt_text_lan
 
 with gr.Blocks(title="GPT-Sovits Inference WebUI", css=css) as app:
     gr.Markdown("## <center>[GPT-Sovits](https://github.com/RVC-Boss/GPT-SoVITS) 语音合成</center>")
+    gr.Markdown(f"{webui_agreement()}")
     with gr.Tabs(selected="single"):
         with gr.Tab("单人推理", id="single"):
             with gr.Row():

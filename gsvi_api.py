@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import argparse
 
-pre_infer("GPT_SoVITS/configs/tts_infer.yaml")
+
 
 APP = FastAPI()
 
@@ -112,9 +112,10 @@ async def infer_ref(model: inferWithCustomRefAaudio):
                 audio_url = f"http://{host}:{port}/{audio_path}"
             else:
                 audio_url = f"{model.audio_dl_url}/{audio_path}"
-    except:
+    except Exception as e:
         msg = "参数错误"
         audio_url = ""
+        print(e)
     return {"msg": msg, "audio_url": audio_url}
 
 # 根据情感进行推理
@@ -166,6 +167,7 @@ if __name__ == '__main__':
     parser.add_argument("-s","--host", type=str, default="127.0.0.1", help="主机地址")
     parser.add_argument("-p","--port", type=int, default=8000, help="端口")
     parser.add_argument("-k","--key", type=str, default="", help="推理密钥")
+    parser.add_argument("-d","--device", type=str, default="cuda", help="推理设备(cuda/cpu)")
     args = parser.parse_args()
     
     infer_key = args.key
@@ -173,4 +175,11 @@ if __name__ == '__main__':
     port = args.port
     
     import uvicorn
+    
+    if args.device == "cuda":
+        pre_infer("GPT_SoVITS/configs/tts_infer.yaml")
+    else:
+        pre_infer("GPT_SoVITS/configs/tts_infer_cpu.yaml")
+    
     uvicorn.run(app=APP, host=host, port=port)
+    
