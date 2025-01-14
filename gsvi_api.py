@@ -3,9 +3,26 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import argparse
+import uvicorn
 
+#===========================启动参数===========================
+parser = argparse.ArgumentParser(description="TTS Inference API")
+parser.add_argument("-s","--host", type=str, default="127.0.0.1", help="主机地址")
+parser.add_argument("-p","--port", type=int, default=8000, help="端口")
+parser.add_argument("-k","--key", type=str, default="", help="推理密钥")
+parser.add_argument("-d","--device", type=str, default="cuda", help="推理设备(cuda/cpu)")
+args = parser.parse_args()
+    
+infer_key = args.key
+host = args.host
+port = args.port
+    
+if args.device == "cuda":
+    pre_infer("GPT_SoVITS/configs/tts_infer.yaml")
+else:
+    pre_infer("GPT_SoVITS/configs/tts_infer_cpu.yaml")
 
-
+#===========================启动服务===========================
 APP = FastAPI()
 
 # 定义请求参数模型
@@ -162,24 +179,4 @@ APP.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 async def download(result_path: str):
     return FileResponse(f"outputs/{result_path}")
     
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="TTS Inference API")
-    parser.add_argument("-s","--host", type=str, default="127.0.0.1", help="主机地址")
-    parser.add_argument("-p","--port", type=int, default=8000, help="端口")
-    parser.add_argument("-k","--key", type=str, default="", help="推理密钥")
-    parser.add_argument("-d","--device", type=str, default="cuda", help="推理设备(cuda/cpu)")
-    args = parser.parse_args()
-    
-    infer_key = args.key
-    host = args.host
-    port = args.port
-    
-    import uvicorn
-    
-    if args.device == "cuda":
-        pre_infer("GPT_SoVITS/configs/tts_infer.yaml")
-    else:
-        pre_infer("GPT_SoVITS/configs/tts_infer_cpu.yaml")
-    
-    uvicorn.run(app=APP, host=host, port=port)
-    
+uvicorn.run(app=APP, host=host, port=port)
