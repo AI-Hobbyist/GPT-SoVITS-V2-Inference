@@ -22,6 +22,8 @@ from base64 import b64decode
 from tqdm import tqdm
 from time import time
 from datetime import datetime
+import csv
+import pandas as pd
 
 #===============推理预备================
 def pre_infer(config_path):
@@ -120,6 +122,10 @@ def tts_infer(text, text_lang, ref_audio_path, prompt_text, prompt_lang, top_k, 
     audio = pack_audio(BytesIO(), audio, sr, media_type).getvalue()
     
     return audio
+
+def audio_md5(audio):
+    audio_md5 = md5(audio).hexdigest()
+    return audio_md5
 
 #===============通用函数================
 # 将base64编码音频转换为音频数据，并写出到文件，文件名为md5值
@@ -295,8 +301,10 @@ def single_infer(modelname, speaker, prompt_lang, emotion, text, text_lang, top_
     return audio_path, msg
 
 # 根据说话人和情感合成语音（多人合成）
+
 def multi_infer(content, top_k, top_p, temperature, text_split_method, batch_size, batch_threshold, split_bucket, fragment_interval, media_type, parallel_infer, repetition_penalty, seed):
     log_list = []
+    csv_data = []
     try:
         content_list = content.split("‖")
         filtered_list = list(filter(str.strip, content_list))
@@ -322,24 +330,51 @@ def multi_infer(content, top_k, top_p, temperature, text_split_method, batch_siz
                     ref_audio = f"models/{model_name}/reference_audios/emotions/{speaker}/{prompt_lang}/【{emo}】{prompt_text}.wav"
             except:
                 log_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-                log_list.append(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}] 第 {i+1} 段对话格式错误或参数有误，已跳过！")
+                log_list.append(f"[{log_time}] 第 {i+1} 段对话格式错误或参数有误，已跳过！")
                 continue
             log_list.append(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}] 正在合成第 {i+1} 段对话，模型：{model_name}，说话人：{speaker}，情感：{emotion}")
             load_model(model_name)
             if seed == -1:
                 seed = random_seed()
             audio = tts_infer(text, text_lang, ref_audio, prompt_text, prompt_lang, top_k, top_p, temperature, text_split_method, batch_size, batch_threshold, split_bucket, speed_facter, fragment_interval, seed, media_type, parallel_infer, repetition_penalty)
-            Path(f"outputs/conv_{content_md5}/{i+1}_{speaker}.wav").write_bytes(audio)
-            Path(f"outputs/conv_{content_md5}/{i+1}_{speaker}.txt").write_text(text, encoding="utf-8")
+            audio_filename = f"{i+1}.wav"
+            Path(f"outputs/conv_{content_md5}/{audio_filename}").write_bytes(audio)
             log_list.append(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}] 第 {i+1} 段对话合成成功！")
+            csv_data.append([audio_filename, model_name, speaker, emotion, text])
         Path(f"outputs/conv_{content_md5}/log.txt").write_text("\n".join(log_list), encoding="utf-8")
+        
+        # Write to XLSX
+        xlsx_path = f"outputs/conv_{content_md5}/参考台本.xlsx"
+        df = pd.DataFrame(csv_data, columns=["文件名", "模型", "说话人", "情感", "文本内容"])
+        with pd.ExcelWriter(xlsx_path, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='台本')
+            workbook = writer.book
+            worksheet = writer.sheets['台本']
+            excel_format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'border': 1})
+            
+            columns_to_adjust = {
+                "文件名": 10,
+                "模型": 24,
+                "说话人": 24,
+                "情感": 15,
+                "文本内容": 90
+            }
+            
+            for col_name, col_width in columns_to_adjust.items():
+                col_idx = df.columns.get_loc(col_name)
+                worksheet.set_column(col_idx, col_idx, col_width)
+                worksheet.write(0, col_idx, col_name, excel_format)
+                for row_idx, value in enumerate(df[col_name], start=1):
+                    worksheet.write(row_idx, col_idx, value, excel_format)
+        
         if os.name == "nt":
-            subprocess.run(f"./7-Zip/7za.exe a -t7z outputs/conv_{content_md5}.7z outputs/conv_{content_md5}",stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            subprocess.run(f"./7-Zip/7za.exe a -t7z outputs/conv_{content_md5}.7z outputs/conv_{content_md5}", stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         else:
-            subprocess.run(f"7za a -t7z outputs/conv_{content_md5}.7z outputs/conv_{content_md5}", shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            subprocess.run(f"7za a -t7z outputs/conv_{content_md5}.7z outputs/conv_{content_md5}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         archive_path = f"outputs/conv_{content_md5}.7z"
         msg = "合成成功"
-    except:
+    except Exception as e:
         msg = "合成失败，参数错误！"
         archive_path = ""
+        print(e)
     return archive_path, msg
