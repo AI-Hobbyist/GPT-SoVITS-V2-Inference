@@ -1,3 +1,7 @@
+## Introduction
+A modified GPT-Sovits for inference with new features
+## Example Model Tree
+![Example](docs/example.png)
 <div align="center">
 
 
@@ -269,12 +273,12 @@ Use v2 from v1 environment:
 - [ ] **Features:**
   - [x] Zero-shot voice conversion (5s) / few-shot voice conversion (1min).
   - [x] TTS speaking speed control.
-  - [ ] ~~Enhanced TTS emotion control.~~ Maybe use pretrained finetuned preset GPT models for better emotion.
+  - [ ] ~~Enhanced TTS emotion control.~~
   - [ ] Experiment with changing SoVITS token inputs to probability distribution of GPT vocabs (transformer latent).
   - [x] Improve English and Japanese text frontend.
   - [ ] Develop tiny and larger-sized TTS models.
   - [x] Colab scripts.
-  - [x] Try expand training dataset (2k hours -> 10k hours).
+  - [ ] Try expand training dataset (2k hours -> 10k hours).
   - [x] better sovits base model (enhanced audio quality)
   - [ ] model mix
 
@@ -321,15 +325,12 @@ Special thanks to the following projects and contributors:
 - [contentvec](https://github.com/auspicious3000/contentvec/)
 - [hifi-gan](https://github.com/jik876/hifi-gan)
 - [fish-speech](https://github.com/fishaudio/fish-speech/blob/main/tools/llama/generate.py#L41)
-- [f5-TTS](https://github.com/SWivid/F5-TTS/blob/main/src/f5_tts/model/backbones/dit.py)
-- [shortcut flow matching](https://github.com/kvfrans/shortcut-models/blob/main/targets_shortcut.py)
 ### Pretrained Models
 - [Chinese Speech Pretrain](https://github.com/TencentGameMate/chinese_speech_pretrain)
 - [Chinese-Roberta-WWM-Ext-Large](https://huggingface.co/hfl/chinese-roberta-wwm-ext-large)
-- [BigVGAN](https://github.com/NVIDIA/BigVGAN)
 ### Text Frontend for Inference
 - [paddlespeech zh_normalization](https://github.com/PaddlePaddle/PaddleSpeech/tree/develop/paddlespeech/t2s/frontend/zh_normalization)
-- [split-lang](https://github.com/DoodleBears/split-lang)
+- [LangSegment](https://github.com/juntaosun/LangSegment)
 - [g2pW](https://github.com/GitYCC/g2pW)
 - [pypinyin-g2pW](https://github.com/mozillazg/pypinyin-g2pW)
 - [paddlespeech g2pw](https://github.com/PaddlePaddle/PaddleSpeech/tree/develop/paddlespeech/t2s/frontend/g2pw)
